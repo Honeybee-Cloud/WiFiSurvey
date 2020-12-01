@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">WiFi Survey</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="scan">Scan</string>
+    <string name="copy">Copy</string>
+    <string name="ready">Ready</string>
+    <string name="wait">Wait</string>
+    <string name="newButton">New</string>
+    <string name="title_activity_maps">Map</string>
+</resources>
