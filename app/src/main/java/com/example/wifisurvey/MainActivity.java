@@ -75,14 +75,28 @@ public class MainActivity extends AppCompatActivity {
                 for (ScanResult i : mScanResults)
                 {
                     Log.d("WiFi Survey:wifiScanCallback", "Adding observation: " + i.toString());
-                    setReadyIndicator(true);
 
                     WifiObservation obs = new WifiObservation(i);
                     WifiSurveyDatabase.getInstance(context).getWifiObservationDao().insertWifiObservation(obs);
                 }
+
+                setReadyIndicator(true);
+                updateTextBox();
             }
         }
     };
+
+    private void updateTextBox() {
+        List<WifiObservation> observations = WifiSurveyDatabase.getInstance(this).getWifiObservationDao().get10WifiObservations();
+
+        String newText = "";
+        for (WifiObservation obs : observations) {
+            newText += "SSID: " + obs.getSsid() + "; Timestamp: " + obs.getTimestamp();
+            newText += "\n";
+        }
+
+        ((EditText)findViewById(R.id.outputTextBox)).setText(newText);
+    }
 
     private void setReadyIndicator(boolean status) {
         Button button = (Button)findViewById(R.id.readyIndicator);

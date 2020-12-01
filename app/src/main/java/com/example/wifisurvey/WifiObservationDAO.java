@@ -14,4 +14,7 @@ public interface WifiObservationDAO {
     @Query("SELECT * FROM WifiObservations")
     List<WifiObservation> getWifiObservations();
 
+    @Query("SELECT * FROM WifiObservations LIMIT 10")
+    List<WifiObservation> get10WifiObservations();
+
 }

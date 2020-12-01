@@ -13,4 +13,7 @@ public interface LocationPingDAO {
 
     @Query("SELECT * FROM LocationPings")
     List<LocationPing> getLocationPings();
+
+    @Query("SELECT * FROM LocationPings LIMIT 10")
+    List<LocationPing> get10LocationPings();
 }
