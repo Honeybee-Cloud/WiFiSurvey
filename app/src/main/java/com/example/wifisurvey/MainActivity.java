@@ -14,8 +14,6 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -139,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Checks permissions, acquires handles to Managers, registers WiFi scan callback, and
      * registers button click callbacks
-     * @param savedInstanceState
+     * @param savedInstanceState Currently only passed to super.
      */
     @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
