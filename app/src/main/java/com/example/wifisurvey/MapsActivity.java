@@ -1,31 +1,30 @@
 package com.example.wifisurvey;
 
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.FragmentActivity;
-
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.FragmentActivity;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Polygon;
-import com.google.android.gms.maps.model.Polyline;
 
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements
         OnMapReadyCallback,
-        GoogleMap.OnPolylineClickListener,
-        GoogleMap.OnPolygonClickListener {
+        GoogleMap.OnCircleClickListener {
 
     private GoogleMap mMap;
+    private Circle curCircle = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,18 +33,47 @@ public class MapsActivity extends FragmentActivity implements
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+        assert mapFragment != null;
         mapFragment.getMapAsync(this);
     }
 
+    /**
+     * Simple helper function to convert nanosecond to microseconds
+     * @param nanos a time in nanoseconds
+     * @return the argument in microseconds
+     */
     private long nanoToMicro(long nanos) {
-        return nanos * 1000L;
+        return nanos / 1000L;
+    }
+
+    /**
+     *
+     * @param circle
+     */
+    @Override
+    public void onCircleClick(Circle circle) {
+        Log.d("WiFi Survey:onCircleClick", "New circle clicked.");
+
+        if (curCircle != null) {
+            curCircle.setFillColor(Color.TRANSPARENT);
+        }
+
+        curCircle = circle;
+
+        circle.setFillColor(Color.RED);
+
+        CircleTag tag = (CircleTag)circle.getTag();
+        if (tag == null) {
+            Log.d("WiFi Survey:onCircleClick", "Tag is null.");
+            return;
+        }
     }
 
     /**
      * This class is added to the Map marker circles as a tag. When a user clicks a circle we
      * can retrieve the relevant scan data
      */
-    private class CircleTag {
+    private static class CircleTag {
         private List<WifiObservation> observations;
         private LocationPing ping;
 
@@ -99,22 +127,32 @@ public class MapsActivity extends FragmentActivity implements
 
             Log.d("WiFi Survey:updateLocationPings",
                     "Got observations between (" + cur_time_micros + ", " + next_time_micros + ")");
+            Log.d("WiFi Survey:updateLocationPings", "Number of observations: " + observations.size());
 
             //Get the Lat/Lng for each GPS ping
             LatLng latlng = new LatLng(p.getLatitude(), p.getLongitude());
 
             mMap.addCircle(new CircleOptions()
                     .center(latlng)
+                    .clickable(true)
                     .radius(p.getAccuracy())
                     .strokeColor(Color.RED)
                     .fillColor(Color.TRANSPARENT))
                     .setTag(new CircleTag(p, observations));
 
-            Log.d("WiFi Survey:onMapReady", "Moving camera to: " + latlng.toString());
+            Log.d("WiFi Survey:updateLocationPings", "Moving camera to: " + latlng.toString());
             mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
             mMap.moveCamera(CameraUpdateFactory.zoomTo(17));
 
             next_time_micros = cur_time_micros;
+        }
+
+        //Add any remaining Observations to the last element
+        List<WifiObservation> observations =
+                db.getWifiObservationDao().getObservationsBetweenTimesAsc(0L, next_time_micros);
+        Log.d("WiFi Survey:updateLocationPings", "Size of remainders: " + observations.size());
+        for (WifiObservation obs : observations) {
+            Log.d("WiFi Survey:updateLocationPings", "Time since boot in micros: " + obs.getTimeSinceBootMicros());
         }
     }
 
@@ -149,22 +187,6 @@ public class MapsActivity extends FragmentActivity implements
 
         updateLocationPings();
 
-        mMap.setOnPolylineClickListener(this);
-        mMap.setOnPolygonClickListener(this);
-    }
-
-    @Override
-    public void onPolygonClick(Polygon polygon) {
-
-    }
-
-    @Override
-    public void onPolylineClick(Polyline polyline) {
-
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
+        mMap.setOnCircleClickListener(this);
     }
 }

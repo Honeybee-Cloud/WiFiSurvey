@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private final Consumer<Location> gpsCallback = t -> {
         Log.d("WiFi Survey:addLocationPing", "Attempting to add Location: " + t.toString());
         LocationPing obs = new LocationPing(t);
+        Log.d("WiFi Survey:addLocationPing", "Timestamp nanos: " + obs.getTimeSinceBootNanos());
         WifiSurveyDatabase db = WifiSurveyDatabase.getInstance(this);
         db.getLocationPingDao().insertLocationPing(obs);
     };
