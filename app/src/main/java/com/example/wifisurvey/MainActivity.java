@@ -34,28 +34,38 @@ public class MainActivity extends AppCompatActivity {
     private LocationManager locationManager = null;
     private boolean scanReadyStatus = true;
 
-    private void exportDatabase() {
+    /**
+     * Exports the contents of the database to a CSV file.
+     */
+    private void exportDatabaseCSV() {
 
     }
 
+    /**
+     * Destructively clears the Database. All contents are lost.
+     *
+     * TODO Add a warning prompt
+     */
     private void clearDatabase() {
         Room.databaseBuilder(this, WifiSurveyDatabase.class, "WifiSurveyDatabase")
                 .fallbackToDestructiveMigration()
                 .build();
     }
 
-    private void addLocationPing(Location t) {
+    /**
+     * The callback for when a Location request completes. Does not change indicator color.
+     */
+    private final Consumer<Location> gpsCallback = t -> {
         Log.d("WiFi Survey:addLocationPing", "Attempting to add Location: " + t.toString());
         LocationPing obs = new LocationPing(t);
         WifiSurveyDatabase db = WifiSurveyDatabase.getInstance(this);
         db.getLocationPingDao().insertLocationPing(obs);
-    }
-
-    private final Consumer<Location> gpsCallback = t -> {
-        Log.d("WiFi Survey:gpsCallback", t.toString().trim());
-        addLocationPing(t);
     };
 
+    /**
+     * The callback for when a WiFi scan completes. Adds the results to the DB and changes
+     * indicator to ready.
+     */
     private final BroadcastReceiver wifiScanCallback = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -75,6 +85,11 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    /**
+     * Updates the big text view with the topp 100 wifi observations
+     *
+     * TODO Replace with recyclerview
+     */
     private void updateTextBox() {
         List<WifiObservation> observations = WifiSurveyDatabase.getInstance(this).getWifiObservationDao().get100WifiObservations();
 
@@ -87,6 +102,13 @@ public class MainActivity extends AppCompatActivity {
         ((EditText)findViewById(R.id.outputTextBox)).setText(newText.toString());
     }
 
+    /**
+     * Changes the "Ready State Indicator".
+     *
+     * TODO Change indicator color
+     *
+     * @param status True means Ready, false means Wait
+     */
     private void setReadyIndicator(boolean status) {
         Button button = findViewById(R.id.readyIndicator);
 
@@ -99,6 +121,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Launches the WiFi and GPS scans.
+     */
     @RequiresApi(api = Build.VERSION_CODES.R)
     @SuppressLint("MissingPermission")
     public void doScan()
@@ -111,28 +136,11 @@ public class MainActivity extends AppCompatActivity {
         setReadyIndicator(false);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
+    /**
+     * Checks permissions, acquires handles to Managers, registers WiFi scan callback, and
+     * registers button click callbacks
+     * @param savedInstanceState
+     */
     @RequiresApi(api = Build.VERSION_CODES.R)
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -174,13 +182,16 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.scanButton).setOnClickListener(view -> doScan());
 
         //Callback for Export
-        findViewById(R.id.exportButton).setOnClickListener(view -> exportDatabase());
+        findViewById(R.id.exportButton).setOnClickListener(view -> exportDatabaseCSV());
 
         //Callback for Clear
         findViewById(R.id.clearButton).setOnClickListener(view -> clearDatabase());
 
     }
 
+    /**
+     * Does nothing yet.
+     */
     @Override
     public void onResume()
     {
