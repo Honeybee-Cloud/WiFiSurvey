@@ -15,7 +15,6 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.Polyline;
 
@@ -28,8 +27,6 @@ public class MapsActivity extends FragmentActivity implements
 
     private GoogleMap mMap;
 
-    private static final float GPS_PING_FACTOR = 0.5f;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +37,40 @@ public class MapsActivity extends FragmentActivity implements
         mapFragment.getMapAsync(this);
     }
 
+    private long nanoToMicro(long nanos) {
+        return nanos * 1000L;
+    }
+
+    /**
+     * This class is added to the Map marker circles as a tag. When a user clicks a circle we
+     * can retrieve the relevant scan data
+     */
+    private class CircleTag {
+        private List<WifiObservation> observations;
+        private LocationPing ping;
+
+        public CircleTag(LocationPing _ping, List<WifiObservation> _observations) {
+            ping = _ping;
+            observations = _observations;
+        }
+
+        public LocationPing getPing() {
+            return ping;
+        }
+
+        public void setPing(LocationPing ping) {
+            this.ping = ping;
+        }
+
+        public List<WifiObservation> getObservations() {
+            return observations;
+        }
+
+        public void setObservations(List<WifiObservation> observations) {
+            this.observations = observations;
+        }
+    }
+
     /**
      * Clears the map and redraws pings
      */
@@ -47,13 +78,29 @@ public class MapsActivity extends FragmentActivity implements
         mMap.clear();
         WifiSurveyDatabase db = WifiSurveyDatabase.getInstance(this);
 
-        List<LocationPing> pings = db.getLocationPingDao().getLocationPings();
+        //Most recent first. We will iterate over it backwards relative to time
+        List<LocationPing> pings = db.getLocationPingDao().getLocationsByTimeDesc();
 
-        //Get the Lat/Lng for each GPS ping
+        long next_time_micros = Long.MAX_VALUE;
+
         for (LocationPing p : pings) {
             /*
             Accuracy: https://developer.android.com/reference/android/location/Location#getAccuracy()
              */
+
+            //WiFi observations have timestamp in micros since boot
+            //GPS fixes have it in nanos since boot
+            long cur_time_micros = nanoToMicro(p.getTimeSinceBootNanos());
+
+            //Get all WifiObservations that occurred after this location fix and before the next chronological fix
+            //TODO find a better and more rigorous way of ordering scans
+            List<WifiObservation> observations =
+                    db.getWifiObservationDao().getObservationsBetweenTimesAsc(cur_time_micros, next_time_micros);
+
+            Log.d("WiFi Survey:updateLocationPings",
+                    "Got observations between (" + cur_time_micros + ", " + next_time_micros + ")");
+
+            //Get the Lat/Lng for each GPS ping
             LatLng latlng = new LatLng(p.getLatitude(), p.getLongitude());
 
             mMap.addCircle(new CircleOptions()
@@ -61,11 +108,13 @@ public class MapsActivity extends FragmentActivity implements
                     .radius(p.getAccuracy())
                     .strokeColor(Color.RED)
                     .fillColor(Color.TRANSPARENT))
-                    .setTag(p);
+                    .setTag(new CircleTag(p, observations));
 
             Log.d("WiFi Survey:onMapReady", "Moving camera to: " + latlng.toString());
             mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
             mMap.moveCamera(CameraUpdateFactory.zoomTo(17));
+
+            next_time_micros = cur_time_micros;
         }
     }
 
