@@ -1,0 +1,1 @@
+You will need to add your own Maps API key as described here: https://developers.google.com/maps/documentation/android-sdk/get-api-key
