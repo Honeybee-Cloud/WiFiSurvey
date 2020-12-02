@@ -2,69 +2,58 @@ package com.example.wifisurvey;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.BroadcastReceiver;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.EditText;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.room.Room;
 
-import android.os.ParcelFileDescriptor;
-import android.provider.DocumentsContract;
-import android.util.Log;
-import android.view.View;
-
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class MainActivity extends AppCompatActivity {
 
     private WifiManager wifiManager = null;
-    private String clipboardText = "";
     private LocationManager locationManager = null;
-    private ClipboardManager clipboardManager = null;
     private boolean scanReadyStatus = true;
+
+    private void exportDatabase() {
+
+    }
+
+    private void clearDatabase() {
+        Room.databaseBuilder(this, WifiSurveyDatabase.class, "WifiSurveyDatabase")
+                .fallbackToDestructiveMigration()
+                .build();
+    }
 
     private void addLocationPing(Location t) {
         Log.d("WiFi Survey:addLocationPing", "Attempting to add Location: " + t.toString());
         LocationPing obs = new LocationPing(t);
         WifiSurveyDatabase db = WifiSurveyDatabase.getInstance(this);
         db.getLocationPingDao().insertLocationPing(obs);
-
-        List<LocationPing> pings = db.getLocationPingDao().getLocationPings();
     }
 
-    private final Consumer<Location> gpsCallback = new Consumer<Location>() {
-        @SuppressLint("MissingPermission")
-        @Override
-        public void accept(Location t)
-        {
-            Log.d("WiFi Survey:gpsCallback", t.toString().trim());
-            addLocationPing(t);
-        }
+    private final Consumer<Location> gpsCallback = t -> {
+        Log.d("WiFi Survey:gpsCallback", t.toString().trim());
+        addLocationPing(t);
     };
 
     private final BroadcastReceiver wifiScanCallback = new BroadcastReceiver() {
@@ -87,32 +76,27 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private void updateTextBox() {
-        List<WifiObservation> observations = WifiSurveyDatabase.getInstance(this).getWifiObservationDao().get10WifiObservations();
+        List<WifiObservation> observations = WifiSurveyDatabase.getInstance(this).getWifiObservationDao().get100WifiObservations();
 
-        String newText = "";
+        StringBuilder newText = new StringBuilder();
         for (WifiObservation obs : observations) {
-            newText += "SSID: " + obs.getSsid() + "; Timestamp: " + obs.getTimestamp();
-            newText += "\n";
+            newText.append("SSID: ").append(obs.getSsid()).append("; Timestamp: ")
+                    .append(obs.getTimeSinceBootMicros()).append("\n");
         }
 
-        ((EditText)findViewById(R.id.outputTextBox)).setText(newText);
+        ((EditText)findViewById(R.id.outputTextBox)).setText(newText.toString());
     }
 
     private void setReadyIndicator(boolean status) {
-        Button button = (Button)findViewById(R.id.readyIndicator);
+        Button button = findViewById(R.id.readyIndicator);
 
-        if (status == true) {
+        if (status) {
             button.setText(getResources().getString(R.string.ready));
             scanReadyStatus = true;
         } else {
             button.setText(getResources().getString(R.string.wait));
             scanReadyStatus = false;
         }
-    }
-
-    public void copyToClipboard() {
-        ClipData clip = ClipData.newPlainText("", clipboardText);
-        clipboardManager.setPrimaryClip(clip);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.R)
@@ -155,27 +139,20 @@ public class MainActivity extends AppCompatActivity {
     {
         super.onCreate(savedInstanceState);
 
-        //Check for permissions
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
         {
-            if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-            {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 87);
-            }
-            if(checkSelfPermission(Manifest.permission.CHANGE_WIFI_STATE) != PackageManager.PERMISSION_GRANTED)
-            {
-                requestPermissions(new String[]{Manifest.permission.CHANGE_WIFI_STATE}, 87);
-            }
-            if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-            {
-                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 87);
-            }
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 87);
+        }
+        if(checkSelfPermission(Manifest.permission.CHANGE_WIFI_STATE) != PackageManager.PERMISSION_GRANTED)
+        {
+            requestPermissions(new String[]{Manifest.permission.CHANGE_WIFI_STATE}, 87);
+        }
+        if(checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+        {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 87);
         }
 
         scanReadyStatus = true;
-
-        //For the copy button
-        clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -194,20 +171,13 @@ public class MainActivity extends AppCompatActivity {
         ((EditText)findViewById(R.id.outputTextBox)).setHorizontallyScrolling(true);
 
         //Callback for Scan
-        findViewById(R.id.scanButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                doScan();
-            }
-        });
+        findViewById(R.id.scanButton).setOnClickListener(view -> doScan());
 
-        //Callback for Copy
-        findViewById(R.id.copyButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                copyToClipboard();
-            }
-        });
+        //Callback for Export
+        findViewById(R.id.exportButton).setOnClickListener(view -> exportDatabase());
+
+        //Callback for Clear
+        findViewById(R.id.clearButton).setOnClickListener(view -> clearDatabase());
 
     }
 

@@ -5,8 +5,6 @@ import android.location.Location;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-import java.sql.Time;
-
 @Entity(tableName = "LocationPings")
 public class LocationPing {
 
@@ -17,7 +15,7 @@ public class LocationPing {
     @PrimaryKey(autoGenerate = true)
     private int id;
 
-    private long timestamp;
+    private long timeSinceBootNanos;
 
     private double longitude;
     private double latitude;
@@ -37,7 +35,7 @@ public class LocationPing {
     }
 
     public LocationPing(Location loc) {
-        setTimestamp(loc.getElapsedRealtimeNanos());
+        setTimeSinceBootNanos(loc.getElapsedRealtimeNanos());
         setAccuracy(loc.getAccuracy());
         setAltitude(loc.getAltitude());
         setBearing(loc.getBearing());
@@ -57,12 +55,12 @@ public class LocationPing {
         return id;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getTimeSinceBootNanos() {
+        return timeSinceBootNanos;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setTimeSinceBootNanos(long timeSinceBootNanos) {
+        this.timeSinceBootNanos = timeSinceBootNanos;
     }
 
     public double getAltitude() {

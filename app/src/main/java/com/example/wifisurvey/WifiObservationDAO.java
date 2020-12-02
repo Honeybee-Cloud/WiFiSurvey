@@ -3,6 +3,7 @@ package com.example.wifisurvey;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Room;
 
 import java.util.List;
 
@@ -14,7 +15,7 @@ public interface WifiObservationDAO {
     @Query("SELECT * FROM WifiObservations")
     List<WifiObservation> getWifiObservations();
 
-    @Query("SELECT * FROM WifiObservations LIMIT 10")
-    List<WifiObservation> get10WifiObservations();
+    @Query("SELECT * FROM WifiObservations LIMIT 100")
+    List<WifiObservation> get100WifiObservations();
 
 }

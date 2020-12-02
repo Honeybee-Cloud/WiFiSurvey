@@ -18,7 +18,7 @@ public class WifiObservation {
     private int channelWidth;
     private int frequency;
     private int level;
-    private long timestamp;
+    private long timeSinceBootMicros;
 
     public WifiObservation() {
 
@@ -31,7 +31,7 @@ public class WifiObservation {
         setCenterFreq0(res.centerFreq0);
         setCenterFreq1(res.centerFreq1);
         setFrequency(res.frequency);
-        setTimestamp(res.timestamp);
+        setTimeSinceBootMicros(res.timestamp);
         setLevel(res.level);
         setChannelWidth(res.channelWidth);
     }
@@ -108,11 +108,11 @@ public class WifiObservation {
         this.level = level;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getTimeSinceBootMicros() {
+        return timeSinceBootMicros;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setTimeSinceBootMicros(long timeSinceBootMicros) {
+        this.timeSinceBootMicros = timeSinceBootMicros;
     }
 }

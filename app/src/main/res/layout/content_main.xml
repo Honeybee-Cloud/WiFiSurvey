@@ -41,10 +41,16 @@
             android:text="@string/scan" />
 
         <Button
-            android:id="@+id/copyButton"
+            android:id="@+id/exportButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/copy" />
+            android:text="@string/exportButton" />
+
+        <Button
+            android:id="@+id/clearButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/clearButton" />
 
         <Button
             android:id="@+id/readyIndicator"
