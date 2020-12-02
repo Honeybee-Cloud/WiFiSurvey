@@ -51,6 +51,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * Switches activity to MapsActivity
+     */
+    private void toMap() {
+        Intent intent = new Intent(this, MapsActivity.class);
+        startActivity(intent);
+    }
+
+    /**
      * The callback for when a Location request completes. Does not change indicator color.
      */
     private final Consumer<Location> gpsCallback = t -> {
@@ -89,7 +97,8 @@ public class MainActivity extends AppCompatActivity {
      * TODO Replace with recyclerview
      */
     private void updateTextBox() {
-        List<WifiObservation> observations = WifiSurveyDatabase.getInstance(this).getWifiObservationDao().get100WifiObservations();
+        List<WifiObservation> observations = WifiSurveyDatabase.getInstance(this)
+                .getWifiObservationDao().get100WifiObservations();
 
         StringBuilder newText = new StringBuilder();
         for (WifiObservation obs : observations) {
@@ -184,6 +193,8 @@ public class MainActivity extends AppCompatActivity {
 
         //Callback for Clear
         findViewById(R.id.clearButton).setOnClickListener(view -> clearDatabase());
+
+        findViewById(R.id.toMapButton).setOnClickListener(view -> toMap());
 
     }
 

@@ -10,4 +10,5 @@
     <string name="title_activity_maps">Map</string>
     <string name="clearButton">Clear</string>
     <string name="exportButton">Export</string>
+    <string name="to_map">To Map</string>
 </resources>

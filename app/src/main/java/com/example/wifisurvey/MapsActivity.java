@@ -1,9 +1,13 @@
 package com.example.wifisurvey;
 
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -24,6 +28,8 @@ public class MapsActivity extends FragmentActivity implements
 
     private GoogleMap mMap;
 
+    private static final float GPS_PING_FACTOR = 0.5f;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +38,35 @@ public class MapsActivity extends FragmentActivity implements
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+    }
+
+    /**
+     * Clears the map and redraws pings
+     */
+    private void updateLocationPings() {
+        mMap.clear();
+        WifiSurveyDatabase db = WifiSurveyDatabase.getInstance(this);
+
+        List<LocationPing> pings = db.getLocationPingDao().getLocationPings();
+
+        //Get the Lat/Lng for each GPS ping
+        for (LocationPing p : pings) {
+            /*
+            Accuracy: https://developer.android.com/reference/android/location/Location#getAccuracy()
+             */
+            LatLng latlng = new LatLng(p.getLatitude(), p.getLongitude());
+
+            mMap.addCircle(new CircleOptions()
+                    .center(latlng)
+                    .radius(p.getAccuracy())
+                    .strokeColor(Color.RED)
+                    .fillColor(Color.TRANSPARENT))
+                    .setTag(p);
+
+            Log.d("WiFi Survey:onMapReady", "Moving camera to: " + latlng.toString());
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(latlng));
+            mMap.moveCamera(CameraUpdateFactory.zoomTo(17));
+        }
     }
 
     /**
@@ -47,27 +82,26 @@ public class MapsActivity extends FragmentActivity implements
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        //FIXME I don't think passing `this` as context is going to work
-        WifiSurveyDatabase db = WifiSurveyDatabase.getInstance(this);
-
-        List<LocationPing> pings = db.getLocationPingDao().getLocationPings();
-
-        //Get the Lat/Lng for each GPS ping
-        for (LocationPing p : pings) {
-            /*
-            Accuracy: https://developer.android.com/reference/android/location/Location#getAccuracy()
-             */
-            mMap.addCircle(new CircleOptions()
-                    .center(new LatLng(p.getLatitude(), p.getLongitude()))
-                    .radius(p.getAccuracy())
-                    .strokeColor(Color.RED)
-                    .fillColor(Color.BLUE));
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
         }
+        mMap.setMyLocationEnabled(true);
+        mMap.getUiSettings().setMyLocationButtonEnabled(true);
 
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        updateLocationPings();
+
+        mMap.setOnPolylineClickListener(this);
+        mMap.setOnPolygonClickListener(this);
     }
 
     @Override
@@ -78,5 +112,10 @@ public class MapsActivity extends FragmentActivity implements
     @Override
     public void onPolylineClick(Polyline polyline) {
 
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 }
