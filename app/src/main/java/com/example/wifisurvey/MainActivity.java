@@ -37,18 +37,41 @@ public class MainActivity extends AppCompatActivity {
 
     private WifiManager wifiManager = null;
     private LocationManager locationManager = null;
+
+    private boolean wifiScanInProgress = false;
+    private boolean gpsScanInProgress = false;
     private boolean scanReadyStatus = true;
 
     private int currentScanId = 0;
 
-    public int getCurrentScanId() {
-        return currentScanId;
+    public void setGpsScanInProgress(boolean gpsScanInProgress) {
+        this.gpsScanInProgress = gpsScanInProgress;
+
+        //No scans in progress so set scanReadyStatus to true
+        if (!this.gpsScanInProgress && !this.wifiScanInProgress) {
+            setReadyIndicator(true);
+        }
+
+        if (this.gpsScanInProgress) {
+            setReadyIndicator(false);
+        }
     }
 
-    protected void setCurrentScanId(int newId) {
-        if (scanReadyStatus) {
-            currentScanId = newId;
+    public void setWifiScanInProgress(boolean wifiScanInProgress) {
+        this.wifiScanInProgress = wifiScanInProgress;
+
+        //No scans in progress so set scanReadyStatus to true
+        if (!this.gpsScanInProgress && !this.wifiScanInProgress) {
+            setReadyIndicator(true);
         }
+
+        if (this.wifiScanInProgress) {
+            setReadyIndicator(false);
+        }
+    }
+
+    public int getCurrentScanId() {
+        return currentScanId;
     }
 
     /**
@@ -135,6 +158,8 @@ public class MainActivity extends AppCompatActivity {
         Log.d("WiFi Survey:addLocationPing", "Timestamp nanos: " + obs.getTimeSinceBootNanos());
         WifiSurveyDatabase db = WifiSurveyDatabase.getInstance(this);
         db.getLocationPingDao().insertLocationPing(obs);
+
+        setGpsScanInProgress(false);
     };
 
     /**
@@ -154,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
                     WifiSurveyDatabase.getInstance(context).getWifiObservationDao().insertWifiObservation(obs);
                 }
 
-                setReadyIndicator(true);
+                setWifiScanInProgress(false);
                 updateTextBox();
             }
         }
@@ -188,12 +213,21 @@ public class MainActivity extends AppCompatActivity {
     private void setReadyIndicator(boolean status) {
         Button button = findViewById(R.id.readyIndicator);
 
+        //Ignore repeated settings. IE setting it true multiple times in a row
+        if (status == scanReadyStatus) {
+            Log.d("WiFi Survey:setReadyIndicator", "Tried to reset status to same status.");
+            return;
+        }
+
         if (status) {
             button.setText(getResources().getString(R.string.ready));
             scanReadyStatus = true;
+            currentScanId += 1;
+            Log.d("WiFi Survey:setReadyIndicator", "Setting status to ready. New scanId is: " + currentScanId);
         } else {
             button.setText(getResources().getString(R.string.wait));
             scanReadyStatus = false;
+            Log.d("WiFi Survey:setReadyIndicator", "Setting status to false.");
         }
     }
 
@@ -204,12 +238,15 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("MissingPermission")
     public void doScan()
     {
-        //Register GPS callback
+        wifiScanInProgress = true;
+        gpsScanInProgress = true;
+        setReadyIndicator(false);
+
+        //Perform the scans
         locationManager.getCurrentLocation(LocationManager.GPS_PROVIDER, null,
                 ContextCompat.getMainExecutor(this), gpsCallback);
         //Run the scan
         wifiManager.startScan();
-        setReadyIndicator(false);
     }
 
     /**
