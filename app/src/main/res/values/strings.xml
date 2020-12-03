@@ -11,4 +11,12 @@
     <string name="clearButton">Clear</string>
     <string name="exportButton">Export</string>
     <string name="to_map">To Map</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <!-- Preference Titles -->
+    <string name="elk_header">ELK Stack</string>
+    <string name="enable_elk_title">Enable ELK Stack Integration</string>
+    <string name="elk_domain_title">Domain of Elasticsearch Server</string>
+    <string name="elk_port_title">Port of Elasticsearch Server</string>
+    <string name="todo">TODO</string>
 </resources>
