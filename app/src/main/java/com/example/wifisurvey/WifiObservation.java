@@ -115,4 +115,18 @@ public class WifiObservation {
     public void setTimeSinceBootMicros(long timeSinceBootMicros) {
         this.timeSinceBootMicros = timeSinceBootMicros;
     }
+
+    public String toCSV() {
+        return new StringBuilder()
+                .append(getBssid()).append(",")
+                .append(getSsid()).append(",")
+                .append(getCapabilities()).append(",")
+                .append(getCenterFreq0()).append(",")
+                .append(getCenterFreq1()).append(",")
+                .append(getChannelWidth()).append(",")
+                .append(getFrequency()).append(",")
+                .append(getLevel()).append(",")
+                .append(getTimeSinceBootMicros())
+                .toString();
+    }
 }

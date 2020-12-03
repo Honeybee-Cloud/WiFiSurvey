@@ -14,6 +14,7 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -23,6 +24,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.room.Room;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -33,10 +35,22 @@ public class MainActivity extends AppCompatActivity {
     private boolean scanReadyStatus = true;
 
     /**
-     * Exports the contents of the database to a CSV file.
+     * Exports the contents of a database as csv
+     * @return A Pair of Lists of Strings. The first list is wifi observations, the second is
+     * gps pings.
      */
-    private void exportDatabaseCSV() {
+    private Pair<List<String>,List<String>> exportDatabaseCSV() {
+        WifiSurveyDatabase db = WifiSurveyDatabase.getInstance(this);
+        LocationPingDAO lpd = db.getLocationPingDao();
+        WifiObservationDAO wod = db.getWifiObservationDao();
 
+        List<String> observations = new ArrayList<String>();
+        wod.getWifiObservations().forEach(i->observations.add(i.toCSV()));
+
+        List<String> pings = new ArrayList<String>();
+        lpd.getLocationPings().forEach(i->pings.add(i.toCSV()));
+
+        return new Pair<>(observations, pings);
     }
 
     /**

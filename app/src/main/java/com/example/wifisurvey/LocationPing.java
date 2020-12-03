@@ -134,4 +134,19 @@ public class LocationPing {
     public void setVerticalAccuracyMeters(float verticalAccuracyMeters) {
         this.verticalAccuracyMeters = verticalAccuracyMeters;
     }
+
+    public String toCSV() {
+        return new StringBuilder()
+                .append(getId()).append(",")
+                .append(getTimeSinceBootNanos()).append(",")
+                .append(getLongitude()).append(",")
+                .append(getLatitude()).append(",")
+                .append(getAccuracy()).append(",")
+                .append(getAltitude()).append(",")
+                .append(getVerticalAccuracyMeters()).append(",")
+                .append(getBearing()).append(",")
+                .append(getBearingAccuracyDegrees()).append(",")
+                .append(getSpeed()).append(",")
+                .append(getSpeedAccuracyMetersPerSecond()).toString();
+    }
 }
