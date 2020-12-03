@@ -9,10 +9,12 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.util.Pair;
 import android.widget.Button;
@@ -22,8 +24,11 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.room.Room;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -33,6 +38,18 @@ public class MainActivity extends AppCompatActivity {
     private WifiManager wifiManager = null;
     private LocationManager locationManager = null;
     private boolean scanReadyStatus = true;
+
+    private int currentScanId = 0;
+
+    public int getCurrentScanId() {
+        return currentScanId;
+    }
+
+    protected void setCurrentScanId(int newId) {
+        if (scanReadyStatus) {
+            currentScanId = newId;
+        }
+    }
 
     /**
      * Exports the contents of a database as csv
@@ -49,6 +66,43 @@ public class MainActivity extends AppCompatActivity {
 
         List<String> pings = new ArrayList<String>();
         lpd.getLocationPings().forEach(i->pings.add(i.toCSV()));
+
+        //Save the file and get a URI
+        //TODO Generate a random file name
+        File file = new File(this.getFilesDir(), "export.csv");
+        //TODO actually write the data to file
+
+        try {
+            FileWriter writer = new FileWriter(file);
+            for (String obs : observations) {
+                writer.write(obs);
+                writer.write("\n");
+            }
+
+            writer.write("\n");
+
+            for (String ping : pings) {
+                writer.write(ping);
+                writer.write("\n");
+            }
+
+            writer.close();
+        } catch (Exception e) {
+            Log.d("WiFi Survey:exportDatabaseCSV", e.toString());
+        }
+
+        //https://developer.android.com/reference/androidx/core/content/FileProvider#ProviderDefinition
+        //https://developer.android.com/training/sharing/send#send-binary-content
+        Uri uri = FileProvider.getUriForFile(this, "com.example.fileprovider", file);
+
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+        shareIntent.addFlags(
+                Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        shareIntent.setType("text/csv");
+
+        startActivity(Intent.createChooser(shareIntent, null));
 
         return new Pair<>(observations, pings);
     }
@@ -77,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private final Consumer<Location> gpsCallback = t -> {
         Log.d("WiFi Survey:addLocationPing", "Attempting to add Location: " + t.toString());
-        LocationPing obs = new LocationPing(t);
+        LocationPing obs = new LocationPing(t, getCurrentScanId());
         Log.d("WiFi Survey:addLocationPing", "Timestamp nanos: " + obs.getTimeSinceBootNanos());
         WifiSurveyDatabase db = WifiSurveyDatabase.getInstance(this);
         db.getLocationPingDao().insertLocationPing(obs);
@@ -96,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
                 {
                     Log.d("WiFi Survey:wifiScanCallback", "Adding observation: " + i.toString());
 
-                    WifiObservation obs = new WifiObservation(i);
+                    WifiObservation obs = new WifiObservation(i, getCurrentScanId());
                     WifiSurveyDatabase.getInstance(context).getWifiObservationDao().insertWifiObservation(obs);
                 }
 

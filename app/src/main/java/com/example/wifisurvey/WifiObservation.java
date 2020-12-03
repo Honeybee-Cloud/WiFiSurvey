@@ -20,11 +20,13 @@ public class WifiObservation {
     private int level;
     private long timeSinceBootMicros;
 
+    private int scanId;
+
     public WifiObservation() {
 
     }
 
-    public WifiObservation(ScanResult res) {
+    public WifiObservation(ScanResult res, int _scanId) {
         setBssid(res.BSSID);
         setSsid(res.SSID);
         setCapabilities(res.capabilities);
@@ -34,6 +36,7 @@ public class WifiObservation {
         setTimeSinceBootMicros(res.timestamp);
         setLevel(res.level);
         setChannelWidth(res.channelWidth);
+        setScanId(_scanId);
     }
 
     public String getBssid() {
@@ -116,8 +119,17 @@ public class WifiObservation {
         this.timeSinceBootMicros = timeSinceBootMicros;
     }
 
+    public void setScanId(int scanId) {
+        this.scanId = scanId;
+    }
+
+    public int getScanId() {
+        return scanId;
+    }
+
     public String toCSV() {
         return new StringBuilder()
+                .append(getId()).append(",")
                 .append(getBssid()).append(",")
                 .append(getSsid()).append(",")
                 .append(getCapabilities()).append(",")
@@ -126,7 +138,8 @@ public class WifiObservation {
                 .append(getChannelWidth()).append(",")
                 .append(getFrequency()).append(",")
                 .append(getLevel()).append(",")
-                .append(getTimeSinceBootMicros())
+                .append(getTimeSinceBootMicros()).append(",")
+                .append(getScanId())
                 .toString();
     }
 }

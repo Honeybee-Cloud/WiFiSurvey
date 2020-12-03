@@ -30,11 +30,13 @@ public class LocationPing {
     private float speed;
     private float speedAccuracyMetersPerSecond;
 
+    private int scanId;
+
     public LocationPing () {
 
     }
 
-    public LocationPing(Location loc) {
+    public LocationPing(Location loc, int _scanId) {
         setTimeSinceBootNanos(loc.getElapsedRealtimeNanos());
         setAccuracy(loc.getAccuracy());
         setAltitude(loc.getAltitude());
@@ -45,6 +47,7 @@ public class LocationPing {
         setSpeed(loc.getSpeed());
         setSpeedAccuracyMetersPerSecond(loc.getSpeedAccuracyMetersPerSecond());
         setVerticalAccuracyMeters(loc.getVerticalAccuracyMeters());
+        setScanId(_scanId);
     }
 
     public void setId(int id) {
@@ -135,6 +138,14 @@ public class LocationPing {
         this.verticalAccuracyMeters = verticalAccuracyMeters;
     }
 
+    public int getScanId() {
+        return scanId;
+    }
+
+    public void setScanId(int scanId) {
+        this.scanId = scanId;
+    }
+
     public String toCSV() {
         return new StringBuilder()
                 .append(getId()).append(",")
@@ -147,6 +158,8 @@ public class LocationPing {
                 .append(getBearing()).append(",")
                 .append(getBearingAccuracyDegrees()).append(",")
                 .append(getSpeed()).append(",")
-                .append(getSpeedAccuracyMetersPerSecond()).toString();
+                .append(getSpeedAccuracyMetersPerSecond()).append(",")
+                .append(getScanId())
+                .toString();
     }
 }
