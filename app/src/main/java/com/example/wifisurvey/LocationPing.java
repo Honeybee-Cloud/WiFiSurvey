@@ -5,6 +5,8 @@ import android.location.Location;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.google.gson.Gson;
+
 @Entity(tableName = "LocationPings")
 public class LocationPing {
 
@@ -147,19 +149,22 @@ public class LocationPing {
     }
 
     public String toCSV() {
-        return new StringBuilder()
-                .append(getId()).append(",")
-                .append(getTimeSinceBootNanos()).append(",")
-                .append(getLongitude()).append(",")
-                .append(getLatitude()).append(",")
-                .append(getAccuracy()).append(",")
-                .append(getAltitude()).append(",")
-                .append(getVerticalAccuracyMeters()).append(",")
-                .append(getBearing()).append(",")
-                .append(getBearingAccuracyDegrees()).append(",")
-                .append(getSpeed()).append(",")
-                .append(getSpeedAccuracyMetersPerSecond()).append(",")
-                .append(getScanId())
-                .toString();
+        return getId() + "," +
+                getTimeSinceBootNanos() + "," +
+                getLongitude() + "," +
+                getLatitude() + "," +
+                getAccuracy() + "," +
+                getAltitude() + "," +
+                getVerticalAccuracyMeters() + "," +
+                getBearing() + "," +
+                getBearingAccuracyDegrees() + "," +
+                getSpeed() + "," +
+                getSpeedAccuracyMetersPerSecond() + "," +
+                getScanId();
+    }
+
+    public String toJson() {
+        Gson gson = new Gson();
+        return gson.toJson(this);
     }
 }

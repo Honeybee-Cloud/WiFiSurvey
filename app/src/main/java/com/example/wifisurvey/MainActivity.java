@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -14,9 +15,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.DocumentsContract;
 import android.util.Log;
-import android.util.Pair;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -26,6 +25,8 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.room.Room;
+
+import com.google.android.material.color.MaterialColors;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -79,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
      * @return A Pair of Lists of Strings. The first list is wifi observations, the second is
      * gps pings.
      */
-    private Pair<List<String>,List<String>> exportDatabaseCSV() {
+    private void exportDatabaseCSV() {
         WifiSurveyDatabase db = WifiSurveyDatabase.getInstance(this);
         LocationPingDAO lpd = db.getLocationPingDao();
         WifiObservationDAO wod = db.getWifiObservationDao();
@@ -91,9 +92,7 @@ public class MainActivity extends AppCompatActivity {
         lpd.getLocationPings().forEach(i->pings.add(i.toCSV()));
 
         //Save the file and get a URI
-        //TODO Generate a random file name
         File file = new File(this.getFilesDir(), "export.csv");
-        //TODO actually write the data to file
 
         try {
             FileWriter writer = new FileWriter(file);
@@ -126,8 +125,6 @@ public class MainActivity extends AppCompatActivity {
         shareIntent.setType("text/csv");
 
         startActivity(Intent.createChooser(shareIntent, null));
-
-        return new Pair<>(observations, pings);
     }
 
     /**
@@ -206,8 +203,6 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Changes the "Ready State Indicator".
      *
-     * TODO Change indicator color
-     *
      * @param status True means Ready, false means Wait
      */
     private void setReadyIndicator(boolean status) {
@@ -223,10 +218,12 @@ public class MainActivity extends AppCompatActivity {
             button.setText(getResources().getString(R.string.ready));
             scanReadyStatus = true;
             currentScanId += 1;
+            button.setBackgroundColor(MaterialColors.getColor(this, R.attr.colorPrimary, Color.BLUE));
             Log.d("WiFi Survey:setReadyIndicator", "Setting status to ready. New scanId is: " + currentScanId);
         } else {
             button.setText(getResources().getString(R.string.wait));
             scanReadyStatus = false;
+            button.setBackgroundColor(Color.RED);
             Log.d("WiFi Survey:setReadyIndicator", "Setting status to false.");
         }
     }

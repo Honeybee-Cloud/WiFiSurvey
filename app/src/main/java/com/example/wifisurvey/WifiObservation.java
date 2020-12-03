@@ -5,6 +5,8 @@ import android.net.wifi.ScanResult;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.google.gson.Gson;
+
 @Entity(tableName="WifiObservations")
 public class WifiObservation {
     @PrimaryKey(autoGenerate = true)
@@ -128,18 +130,21 @@ public class WifiObservation {
     }
 
     public String toCSV() {
-        return new StringBuilder()
-                .append(getId()).append(",")
-                .append(getBssid()).append(",")
-                .append(getSsid()).append(",")
-                .append(getCapabilities()).append(",")
-                .append(getCenterFreq0()).append(",")
-                .append(getCenterFreq1()).append(",")
-                .append(getChannelWidth()).append(",")
-                .append(getFrequency()).append(",")
-                .append(getLevel()).append(",")
-                .append(getTimeSinceBootMicros()).append(",")
-                .append(getScanId())
-                .toString();
+        return getId() + "," +
+                getBssid() + "," +
+                getSsid() + "," +
+                getCapabilities() + "," +
+                getCenterFreq0() + "," +
+                getCenterFreq1() + "," +
+                getChannelWidth() + "," +
+                getFrequency() + "," +
+                getLevel() + "," +
+                getTimeSinceBootMicros() + "," +
+                getScanId();
+    }
+
+    public String toJson() {
+        Gson gson = new Gson();
+        return gson.toJson(this);
     }
 }
